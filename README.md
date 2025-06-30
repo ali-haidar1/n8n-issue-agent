@@ -33,7 +33,7 @@ This project is an n8n workflow that automatically processes new GitHub issues u
 
 ## AI Prompt Used
 
-```text
+```
 You are an AI assistant tasked with processing new GitHub issues. For each issue, follow these steps and return the result as a JSON object with these fields:
 
 1. Categorize the Issue (category): Choose "Bug", "Feature Request", "Question", or "Other".
@@ -59,7 +59,7 @@ RETURN FORMAT (JSON):
   "sentiment": "...",
   "tags": ["...", "...", "..."]
 }
-
+```
 Known Limitations
 
 Team Notifications Not Implemented:

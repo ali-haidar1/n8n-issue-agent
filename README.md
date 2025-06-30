@@ -44,6 +44,11 @@ Database link: [Supabase Project](https://supabase.com/dashboard/project/cvtkomx
 
 ![image](https://github.com/user-attachments/assets/c9bc8376-b24e-497e-b3ea-b64179deb1b8)
 
+![image](https://github.com/user-attachments/assets/0ea1670b-5f7e-4c4b-93a1-568cdcd970fc)
+
+![image](https://github.com/user-attachments/assets/9f14aa04-2101-4329-af69-77c5668cc84d)
+
+
 
 🤖 AI Prompt Used
 

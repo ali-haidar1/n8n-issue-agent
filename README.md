@@ -37,16 +37,13 @@ This ensures only issues created or updated after the previous run are fetched a
 Stores enriched issue data in the enriched_issues table with deduplication on issue_url.
 
 Database link: [Supabase Project](https://supabase.com/dashboard/project/cvtkomxkqqyleneooejy/database/schemas)
+
+
 ![image](https://github.com/user-attachments/assets/0f205608-9f42-4826-81db-19d8196d3e6b)
+
 
 ![image](https://github.com/user-attachments/assets/c9bc8376-b24e-497e-b3ea-b64179deb1b8)
 
-
-🔔 Smart Notifications (Extendable)
-
-Workflow is designed to support notifications (e.g., Slack, Discord) via a Switch node based on the assigned team.
-
-Note: This feature is not fully implemented in this version.
 
 🤖 AI Prompt Used
 

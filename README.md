@@ -3,6 +3,7 @@
 ## Overview
 
 This project is an n8n workflow that automatically processes new GitHub issues using AI. Each issue is categorized, summarized, sentiment-analyzed, tagged, assigned to the correct team, and stored in a Supabase database. Bonus features include smart team notifications and dynamic tag extraction.
+![image](https://github.com/user-attachments/assets/d3cfccb8-5a12-40cb-b27d-fa12eb7d836c)
 
 ---
 

@@ -1,45 +1,56 @@
-# AI-Powered GitHub Issue Triage – n8n Workflow
+🤖 AI-Powered GitHub Issue Triage – n8n Workflow
 
-## Overview
+📝 Overview
 
-This project is an n8n workflow that automatically processes new GitHub issues using AI. Each issue is categorized, summarized, sentiment-analyzed, tagged, assigned to the correct team, and stored in a Supabase database. Bonus features include smart team notifications and dynamic tag extraction.
+This project is an n8n workflow that automatically processes new GitHub issues using AI.Each issue is categorized, summarized, sentiment-analyzed, tagged, assigned to the correct team, and stored in a Supabase database.Bonus features include dynamic tag extraction and (extendable) smart notifications.
+
 ![image](https://github.com/user-attachments/assets/d3cfccb8-5a12-40cb-b27d-fa12eb7d836c)
 
----
+⚙️ Workflow Logic
 
-## Workflow Logic
+🔄 Deduplication (“Since Last Run”) Logic
 
-- **Deduplication:**  
-  Only processes new issues since the last successful run using the GitHub `since` parameter, managed via n8n static data.
+To ensure the workflow processes only new or updated GitHub issues and avoids duplicates, I implemented a persistent timestamp (“since last run”) mechanism using n8n’s static data feature:
 
-- **Enrichment Steps:**
-  1. **Categorization:**  
-     AI classifies the issue as "Bug", "Feature Request", "Question", or "Other" based on title/body content.
-  2. **Summary:**  
-     AI generates a one-sentence summary of the issue body.
-  3. **Role Assignment:**  
-     AI assigns issues to "Engineering", "Sales", "Support", or "Other", based on content.
-  4. **Sentiment Analysis:**  
-     AI labels the issue as "Positive", "Negative", or "Neutral".
-  5. **Tag Extraction:**  
-     AI extracts up to 5 relevant, lower-case, one-word tags for each issue.
+Retrieve the last successful run’s timestamp from n8n’s static data storage.
 
-- **Supabase Storage:**  
-  Stores enriched issue data in the `enriched_issues` table with deduplication on `issue_url`.
-  Database link: https://supabase.com/dashboard/project/cvtkomxkqqyleneooejy/database/schemas
-![image](https://github.com/user-attachments/assets/c9bc8376-b24e-497e-b3ea-b64179deb1b8)
+If this is the first run, default to an old date.
 
+Use this timestamp as the since parameter in the GitHub Issues API request.
+
+This ensures only issues created or updated after the previous run are fetched and processed.
+
+🧠 Enrichment Steps
+
+🏷️ Categorization:AI classifies the issue as Bug, Feature Request, Question, or Other based on title/body content.
+
+📝 Summary:AI generates a one-sentence summary of the issue body.
+
+👥 Role Assignment:AI assigns issues to Engineering, Sales, Support, or Other, based on content.
+
+😀 Sentiment Analysis:AI labels the issue as Positive, Negative, or Neutral.
+
+🏷️ Tag Extraction:AI extracts up to 5 relevant, lower-case, one-word tags for each issue.
+
+🗄️ Supabase Storage
+
+Stores enriched issue data in the enriched_issues table with deduplication on issue_url.
+
+Database link: [Supabase Project](https://supabase.com/dashboard/project/cvtkomxkqqyleneooejy/database/schemas)
 ![image](https://github.com/user-attachments/assets/0f205608-9f42-4826-81db-19d8196d3e6b)
 
-- **Smart Notifications:**  
-  Uses a Switch node to send issues to different Slack or Discord channels based on the assigned team.
+![image](https://github.com/user-attachments/assets/c9bc8376-b24e-497e-b3ea-b64179deb1b8)
 
----
 
-## AI Prompt Used
+🔔 Smart Notifications (Extendable)
 
-```
-You are an AI assistant tasked with processing new GitHub issues. For each issue, follow these steps and return the result as a JSON object with these fields:
+Workflow is designed to support notifications (e.g., Slack, Discord) via a Switch node based on the assigned team.
+
+Note: This feature is not fully implemented in this version.
+
+🤖 AI Prompt Used
+
+```You are an AI assistant tasked with processing new GitHub issues. For each issue, follow these steps and return the result as a JSON object with these fields:
 
 1. Categorize the Issue (category): Choose "Bug", "Feature Request", "Question", or "Other".
 2. Generate a Summary (summary): Write a clear, one-sentence summary of the issue body.
@@ -65,7 +76,9 @@ RETURN FORMAT (JSON):
   "tags": ["...", "...", "..."]
 }
 ```
-Known Limitations
 
-Team Notifications Not Implemented:
-The workflow does not currently send Slack or Discord notifications, as this feature was deprioritized due to time constraints. The Switch node logic can be easily extended in the future.
+🛑 Known Limitations
+
+⚠️ Team Notifications Not Implemented:The workflow does not currently send Slack or Discord notifications, as this feature was deprioritized due to time constraints. The Switch node logic can be easily extended in the future.
+
+⚠️ Workflow may require tuning if repo structure or business logic differs.

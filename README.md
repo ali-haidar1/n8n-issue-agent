@@ -25,7 +25,11 @@ This project is an n8n workflow that automatically processes new GitHub issues u
      AI extracts up to 5 relevant, lower-case, one-word tags for each issue.
 
 - **Supabase Storage:**  
-  Stores enriched issue data in the `enriched_issues` table with deduplication on `issue_url`.  
+  Stores enriched issue data in the `enriched_issues` table with deduplication on `issue_url`.
+  Database link: https://supabase.com/dashboard/project/cvtkomxkqqyleneooejy/database/schemas
+![image](https://github.com/user-attachments/assets/c9bc8376-b24e-497e-b3ea-b64179deb1b8)
+
+![image](https://github.com/user-attachments/assets/0f205608-9f42-4826-81db-19d8196d3e6b)
 
 - **Smart Notifications:**  
   Uses a Switch node to send issues to different Slack or Discord channels based on the assigned team.

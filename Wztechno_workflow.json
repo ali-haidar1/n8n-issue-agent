@@ -1,0 +1,602 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        20,
+        0
+      ],
+      "id": "c68f457b-6684-4df4-8c53-3c6b85b54022",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI assistant tasked with processing new GitHub issues. For each issue, follow these steps and return the result as a JSON object with these fields:\n\n1. Categorize the Issue (category):\nChoose the correct keyword:\n\n\"Bug\"\n\n\"Feature Request\"\n\n\"Question\"\n\n\"Other\" (specify if needed)\n\n2. Generate a Summary (summary):\nWrite a clear, one-sentence summary of the issue based on its body.\n\n3. Assign to a Role (role):\nAssign to one of these:\n\n\"Engineering\" (for bugs and technical feature requests)\n\n\"Sales\" (for pricing, demos, or business inquiries)\n\n\"Support\" (for user questions or guidance)\n\n\"Other\" (specify if needed)\n\n4. Sentiment Analysis (sentiment):\nClassify the overall tone of the issue as:\n\n\"Positive\"\n\n\"Negative\"\n\n\"Neutral\"\n\n5. Tag Extraction (tags):\nExtract up to 5 relevant, lower-case, one-word tags (such as: bug, ui, api, pricing, urgent, etc.)\nReturn as a JSON array.\n\nISSUE DETAILS:\n\ntitle: {{ $json.title }}\n\nbody: {{ $json.body }}\n\ncreator_login: {{ $json.creator_login }}\n\nhtml_url: {{ $json.html_url }}\n\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        840,
+        0
+      ],
+      "id": "caaa7acf-1032-49d1-90bc-422a8734fa9d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        840,
+        260
+      ],
+      "id": "4b558b3e-72b3-4bb2-8de8-83b982fa7a76",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aUbtOKmK5cMuyW5N",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"i need to\",\n  \"creator_login\": \"...\",\n  \"issue_url\": \"..\",\n  \"category\": \"...\",\n  \"summary\": \"...\",\n  \"assigned_role\": \"...\",\n  \"sentiment\": \"...\",\n  \"tags\": [\"...\", \"...\", \"...\"]\n}\n\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1020,
+        260
+      ],
+      "id": "c5d31356-2765-439b-93da-6bfca464273f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => ({ json: item.json.output }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "593adf3e-4399-46f8-a549-0c27a5328aa2",
+      "name": "data_mapping"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\n\nif (!staticData.hasOwnProperty('timestamp')) {\n  staticData.timestamp = '2025-06-29T00:00:00Z'; // or set to a date far in the past\n}\n\n// Use staticData.timestamp to fetch from GitHub\nreturn [\n  {\n    lastRun: staticData.timestamp,\n    // ...any other variables you want to pass along\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "36c6271b-f3f5-46d4-ab7f-023cf62022cf",
+      "name": "since_time"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "results = []\nfor item in items:\n    results.append({\n        \"json\": {\n            \"title\": item[\"json\"].get(\"title\"),\n            \"body\": item[\"json\"].get(\"body\"),\n            \"creator_login\": item[\"json\"].get(\"user\", {}).get(\"login\"),\n            \"html_url\": item[\"json\"].get(\"html_url\"),\n        }\n    })\nreturn results\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "08604831-bc22-4b97-91ef-ab2e6980c432",
+      "name": "parse_issues"
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/ali-haidar1/n8n-issue-agent/issues",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "since",
+              "value": "={{ $json.lastRun }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        420,
+        0
+      ],
+      "id": "3ba193df-f174-4a3b-ae22-feca1891bd43",
+      "name": "Get issues",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "NpPguWSsASH2cxYB",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nstaticData.timestamp = new Date().toISOString();\nreturn staticData;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        -380
+      ],
+      "id": "691aba11-3aca-48e0-a5de-c40a75ddc820",
+      "name": "set run time"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "enriched_issues",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "issue_url": "={{ $json.issue_url }}",
+            "title": "={{ $json.title }}",
+            "creator_login": "={{ $json.creator_login }}",
+            "category": "={{ $json.category }}",
+            "summary": "={{ $json.summary }}",
+            "assigned_role": "={{ $json.assigned_role }}",
+            "sentiment": "={{ $json.sentiment }}",
+            "tags": "={{ $json.tags }}"
+          },
+          "matchingColumns": [
+            "issue_url"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "creator_login",
+              "displayName": "creator_login",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "assigned_role",
+              "displayName": "assigned_role",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "issue_url",
+              "displayName": "issue_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sentiment",
+              "displayName": "sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "array",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1400,
+        0
+      ],
+      "id": "e16a44fa-1191-4cff-98dd-748ff5ab05fe",
+      "name": "upsert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "eW1q6LRT3l13Tgxx",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.assigned_role }}",
+                    "rightValue": "Support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "976bb209-b3cf-4452-b822-9ae7067dccb2"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Support Slack Channel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "75f9ecc1-8a3e-42e5-936f-bf7e67d57900",
+                    "leftValue": "={{ $json.assigned_role }}",
+                    "rightValue": "Engineering",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Engineering Discord Bot"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "63788ca3-0c48-467b-b32b-65f9a9c1497d",
+                    "leftValue": "={{ $json.assigned_role }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sales Slack Channel"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1620,
+        0
+      ],
+      "id": "e1e8f409-316c-4dd9-ac59-387e73bfd5c3",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -200
+      ],
+      "id": "0d6fc548-9861-4f31-8952-1a3f7eda24e7",
+      "name": "Send a message",
+      "webhookId": "4949cb69-f9a0-4210-acab-c79fde9f1840"
+    },
+    {
+      "parameters": {
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2000,
+        20
+      ],
+      "id": "2c98bf8e-735b-4729-8dd9-9f6c026d0a11",
+      "name": "Send a message1",
+      "webhookId": "0c1a4612-b85d-497e-9f14-54f665eaa0e0"
+    },
+    {
+      "parameters": {
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1980,
+        240
+      ],
+      "id": "2f3460ca-2e53-430d-871e-3aea5c2e70fc",
+      "name": "Send a message2",
+      "webhookId": "3a6ed043-214f-47bc-9716-31e59656be8a"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "since_time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "data_mapping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data_mapping": {
+      "main": [
+        [
+          {
+            "node": "upsert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "since_time": {
+      "main": [
+        [
+          {
+            "node": "Get issues",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "set run time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse_issues": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get issues": {
+      "main": [
+        [
+          {
+            "node": "parse_issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set run time": {
+      "main": [
+        []
+      ]
+    },
+    "upsert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Beirut",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "af20b950-8296-4da7-8935-f9d5a3921fd1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cea4c67be284bbf963f5b0c7f3b33340c008cfb9d268b7a12a30a2cbe70ecc3a"
+  },
+  "id": "NFST5gKOhTmFIyjS",
+  "tags": []
+}
